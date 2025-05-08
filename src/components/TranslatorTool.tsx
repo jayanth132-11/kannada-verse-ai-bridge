@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowDown, Plus, Sparkles, RotateCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 const languages = [
@@ -15,6 +16,11 @@ const languages = [
   { value: 'mr', label: 'Marathi' },
   { value: 'bn', label: 'Bengali' },
   { value: 'gu', label: 'Gujarati' },
+  { value: 'pa', label: 'Punjabi' },
+  { value: 'ur', label: 'Urdu' },
+  { value: 'or', label: 'Odia' },
+  { value: 'as', label: 'Assamese' },
+  { value: 'kn', label: 'Kannada' },
 ];
 
 // Mock function for translation - in a real app, this would call an API
@@ -40,6 +46,26 @@ const mockTranslate = (text: string, targetLang: string) => {
       'bn': 'আপনি কেমন আছেন?',
       'gu': 'તમે કેમ છો?',
     },
+    'ಶುಭ ದಿನ': {
+      'en': 'Good day',
+      'hi': 'शुभ दिन',
+      'ta': 'நல்ல நாள்',
+      'te': 'శుభదినం',
+      'ml': 'ശുഭ ദിനം',
+      'mr': 'शुभ दिन',
+      'bn': 'শুভ দিন',
+      'gu': 'શુભ દિવસ',
+    },
+    'ಧನ್ಯವಾದಗಳು': {
+      'en': 'Thank you',
+      'hi': 'धन्यवाद',
+      'ta': 'நன்றி',
+      'te': 'ధన్యవాదాలు',
+      'ml': 'നന്ദി',
+      'mr': 'धन्यवाद',
+      'bn': 'ধন্যবাদ',
+      'gu': 'આભાર',
+    },
   };
 
   return new Promise<string>((resolve) => {
@@ -47,9 +73,20 @@ const mockTranslate = (text: string, targetLang: string) => {
       if (text in translations && targetLang in translations[text]) {
         resolve(translations[text][targetLang]);
       } else {
-        resolve("Translation not available. This is a demo with limited translations.");
+        // Simulate AI translation for unknown texts
+        resolve(`AI Translated: "${text}" to ${languages.find(l => l.value === targetLang)?.label}`);
       }
     }, 1000);
+  });
+};
+
+// Simulate AI-powered translation
+const aiTranslate = (text: string, targetLang: string) => {
+  return new Promise<string>((resolve) => {
+    setTimeout(() => {
+      // In a real implementation, this would call an AI service API
+      resolve(`AI Translation: "${text}" to ${languages.find(l => l.value === targetLang)?.label}`);
+    }, 1500);
   });
 };
 
@@ -58,6 +95,9 @@ const TranslatorTool = () => {
   const [targetLanguage, setTargetLanguage] = useState<string>('en');
   const [translatedText, setTranslatedText] = useState<string>('');
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [customPhrases, setCustomPhrases] = useState<string[]>([]);
+  const [newPhrase, setNewPhrase] = useState<string>('');
+  const [useAI, setUseAI] = useState<boolean>(false);
   const { toast } = useToast();
 
   const handleTranslate = async () => {
@@ -72,7 +112,16 @@ const TranslatorTool = () => {
 
     setIsTranslating(true);
     try {
-      const result = await mockTranslate(inputText, targetLanguage);
+      let result;
+      if (useAI) {
+        result = await aiTranslate(inputText, targetLanguage);
+        toast({
+          title: "AI Translation",
+          description: "Used advanced AI model for this translation.",
+        });
+      } else {
+        result = await mockTranslate(inputText, targetLanguage);
+      }
       setTranslatedText(result);
     } catch (error) {
       toast({
@@ -85,13 +134,43 @@ const TranslatorTool = () => {
     }
   };
 
+  const handleAddCustomPhrase = () => {
+    if (!newPhrase.trim()) {
+      toast({
+        title: "Empty Phrase",
+        description: "Please enter a phrase to add.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setCustomPhrases(prev => [...prev, newPhrase]);
+    setNewPhrase('');
+    toast({
+      title: "Phrase Added",
+      description: "Your custom phrase has been added to examples.",
+    });
+  };
+
   const examplePhrases = [
     'ನಾನು ಪುಸ್ತಕ ಓದುತ್ತಿದ್ದೇನೆ',
     'ನಿಮಗೆ ಹೇಗಿದ್ದೀರ?',
+    'ಶುಭ ದಿನ',
+    'ಧನ್ಯವಾದಗಳು',
   ];
 
   const handleExampleClick = (phrase: string) => {
     setInputText(phrase);
+  };
+
+  const toggleAI = () => {
+    setUseAI(!useAI);
+    toast({
+      title: useAI ? "Standard Translation" : "AI Translation Enabled",
+      description: useAI 
+        ? "Switched to standard translation model." 
+        : "Using advanced AI for better translations.",
+    });
   };
 
   return (
@@ -123,7 +202,42 @@ const TranslatorTool = () => {
               {phrase}
             </Button>
           ))}
+          
+          {customPhrases.map((phrase, index) => (
+            <Button 
+              key={`custom-${index}`} 
+              variant="outline" 
+              size="sm"
+              className="font-kannada bg-blue-50"
+              onClick={() => handleExampleClick(phrase)}
+            >
+              {phrase}
+            </Button>
+          ))}
         </div>
+      </div>
+
+      <div className="mb-6 flex gap-3 items-end">
+        <div className="flex-1">
+          <label htmlFor="newPhrase" className="block text-sm font-medium text-gray-700 mb-2">
+            Add Your Own Phrase
+          </label>
+          <Input
+            id="newPhrase"
+            value={newPhrase}
+            onChange={(e) => setNewPhrase(e.target.value)}
+            placeholder="Type a new Kannada phrase..."
+            className="font-kannada"
+          />
+        </div>
+        <Button 
+          onClick={handleAddCustomPhrase}
+          variant="outline"
+          size="icon"
+          className="shrink-0"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="mb-6">
@@ -144,13 +258,31 @@ const TranslatorTool = () => {
         </Select>
       </div>
 
-      <Button 
-        className="w-full bg-kannada-blue hover:bg-blue-700" 
-        onClick={handleTranslate}
-        disabled={isTranslating || !inputText.trim()}
-      >
-        {isTranslating ? "Translating..." : "Translate"}
-      </Button>
+      <div className="flex flex-wrap gap-4 mb-6">
+        <Button 
+          className={`flex-1 ${useAI ? 'bg-purple-600 hover:bg-purple-700' : 'bg-kannada-blue hover:bg-blue-700'}`}
+          onClick={handleTranslate}
+          disabled={isTranslating || !inputText.trim()}
+        >
+          {isTranslating ? (
+            <>
+              <RotateCw className="mr-2 h-4 w-4 animate-spin" />
+              Translating...
+            </>
+          ) : (
+            "Translate"
+          )}
+        </Button>
+        
+        <Button
+          variant="outline"
+          className={`${useAI ? 'border-purple-600 text-purple-600' : ''}`}
+          onClick={toggleAI}
+        >
+          <Sparkles className={`mr-2 h-4 w-4 ${useAI ? 'text-purple-600' : ''}`} />
+          {useAI ? "Using AI" : "Use AI"}
+        </Button>
+      </div>
 
       {translatedText && (
         <div className="mt-8 pt-6 border-t border-gray-200">
@@ -162,7 +294,7 @@ const TranslatorTool = () => {
             Translation ({languages.find(l => l.value === targetLanguage)?.label})
           </label>
           
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+          <div className={`rounded-lg p-4 border ${useAI ? 'bg-purple-50 border-purple-100' : 'bg-blue-50 border-blue-100'}`}>
             {translatedText}
           </div>
         </div>
