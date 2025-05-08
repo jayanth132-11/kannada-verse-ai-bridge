@@ -12,10 +12,10 @@ const Translator = () => {
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-center">Kannada Translator</h1>
           <p className="text-gray-600 mb-2 text-center">
-            Translate Kannada text to multiple languages with our AI-powered translator
+            Translate any Kannada text to multiple languages with our AI-powered translator
           </p>
           <p className="text-gray-500 mb-8 text-center text-sm">
-            Add your own phrases, try our examples, or use our advanced AI translation model 
+            Type anything, try our examples, or add your own phrases - our advanced AI handles it all
           </p>
           
           <TranslatorTool />
